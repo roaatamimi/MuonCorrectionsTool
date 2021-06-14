@@ -3,84 +3,106 @@
 #include "TFile.h"
 #include "TTree.h"
 #include <vector>
+#include "ROOT/RDataFrame.hxx"
+#include "ROOT/RVec.hxx"
+#include "Math/Vector4Dfwd.h"
+#include "Math/Vector4D.h"
+#include "TStreamerInfo.h"
+#include "ROOT/RDF/RInterface.hxx"
+#include "TCanvas.h"
+#include "TH1D.h"
+#include "TLatex.h"
+#include "TStyle.h"
+
+using namespace ROOT::VecOps;
+
+// Compute the invariant mass of two muon four-vectors
+float computeInvariantMass(RVec<float>& pt, RVec<float>& eta, RVec<float>& phi, RVec<float>& mass) {
+  ROOT::Math::PtEtaPhiMVector m1(pt[0], eta[0], phi[0], mass[0]);
+  ROOT::Math::PtEtaPhiMVector m2(pt[1], eta[1], phi[1], mass[1]);
+  return (m1 + m2).mass();
+}
+
+// Compute the corrected invariant mass of two muon four-vectors
+float correctedInvariantMass(RVec<TLorentzVector> cor_muons) {
+  ROOT::Math::PtEtaPhiMVector m1(cor_muons[0].Pt(), cor_muons[0].Eta(), cor_muons[0].Phi(), cor_muons[0].M());
+  ROOT::Math::PtEtaPhiMVector m2(cor_muons[1].Pt(), cor_muons[1].Eta(), cor_muons[1].Phi(), cor_muons[1].M());
+  return (m1 + m2).mass();
+}
+
+// Create TLorentzVectors
+RVec<TLorentzVector> createVector(RVec<float>& pt, RVec<float>& eta, RVec<float>& phi, RVec<float>& mass) {
+  TLorentzVector mu1;
+  TLorentzVector mu2;
+  mu1.SetPtEtaPhiM(pt[0], eta[0], phi[0], mass[0]);
+  mu2.SetPtEtaPhiM(pt[1], eta[1], phi[1], mass[1]);
+  RVec<TLorentzVector> vectors {mu1, mu2};
+
+  return vectors;
+}
+
+// Add corrections to MC muons
+RVec<TLorentzVector> correcMCMuon(RVec<TLorentzVector> muons, RVec<int>& charge) {
+  rochcor2012 rmcor; // make the pointer of rochcor class
+  float ntrk = 0; //ntrk (number of track layer) is one of input and it can slightly improved the extra smearing
+  float qter = 1.0; // added it by Higgs group’s request to propagate the uncertainty
+
+  rmcor.momcor_mc(muons[0], charge[0], ntrk, qter);
+  rmcor.momcor_mc(muons[1], charge[1], ntrk, qter);
+  RVec<TLorentzVector> vectors {muons[0], muons[1]};
+
+  return vectors;
+}
+
+// Add corrections to data muons
+RVec<TLorentzVector> correctDataMuon(RVec<TLorentzVector> muons, RVec<int>& charge) {
+  rochcor2012 rmcor; // make the notpointer of rochcor class
+  float runopt = 0; //No run dependence for 2012 data, so default of “runopt=0”
+  float qter = 1.0; // added it by Higgs group’s request to propagate the uncertainty
+
+  rmcor.momcor_mc(muons[0], charge[0], runopt, qter);
+  rmcor.momcor_mc(muons[1], charge[1], runopt, qter);
+  RVec<TLorentzVector> vectors {muons[0], muons[1]};
+
+  return vectors;
+}
 
 void Analysis::main()
 {
-  //Creating a TTree from a ROOT-file
-  TFile *f = new TFile("ObjectInfoNtuple.root");
-  TTree *t1 = (TTree*)f->Get("mtree");
+  // Create dataframe from NanoAOD files
+  //ROOT::RDataFrame df("Events", "root://eospublic.cern.ch//eos/opendata/cms/derived-data/AOD2NanoAODOutreachTool/Run2012BC_DoubleMuParked_Muons.root");
+  ROOT::RDataFrame df("Events", "Run2012BC_DoubleMuParked_Muons.root"); // when saved locally
 
-  //Variables to hold values read from the tree
-  Int_t numbermuon = 0;
-  vector<float>* muon_pt = NULL;
-  vector<float>* muon_eta = NULL;
-  vector<float>* muon_phi = NULL;
-  vector<float>* muon_ch = NULL;
+  // Select events with exactly two muons
+  auto df_2mu = df.Filter("nMuon == 2", "Events with exactly two muons");
 
-  //Variables for saving corrected values
-  vector<float>* muon_px = NULL;
-  vector<float>* muon_py = NULL;
-  vector<float>* muon_pz = NULL;
-  vector<float>* muon_e = NULL;
+  // Select events with two muons of opposite charge
+  auto df_os = df_2mu.Filter("Muon_charge[0] != Muon_charge[1]", "Muons with opposite charge");
 
-  //Set addresses to make the tree populate the variables when reading an entry
-  t1->SetBranchAddress("numbermuon", &numbermuon);
-  t1->SetBranchAddress("muon_pt", &muon_pt);
-  t1->SetBranchAddress("muon_eta", &muon_eta);
-  t1->SetBranchAddress("muon_phi", &muon_phi);
-  t1->SetBranchAddress("muon_ch", &muon_ch);
-  t1->SetBranchAddress("muon_px", &muon_px);
-  t1->SetBranchAddress("muon_py", &muon_py);
-  t1->SetBranchAddress("muon_pz", &muon_pz);
-  t1->SetBranchAddress("muon_e", &muon_e);
+  // Compute invariant mass of the dimuon system
+  auto df_mass = df_os.Define("Dimuon_mass", computeInvariantMass, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass"});
 
-  //Variable for muon mass
-  const Float_t muon_m = 0.1056583745; //GeV
+  // Add TLorentzVectors
+  auto df_tlv = df_mass.Define("TLVectors", createVector, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass"});
 
-  // Number of entries
-  Int_t nentries = (Int_t)t1->GetEntries();
-  std::cout << "Number of entries: " <<nentries << std::endl << std::flush;
+  // Run the correctios and add corrected muons as a new column
 
-  rochcor2012 *rmcor = new rochcor2012(); // make the pointer of rochcor class
+  // If you run MC, apply the muon momentum correction "correctMCMuon" function (only for MC)
+  //auto df_tlv = df_cor.Define("CorrectedMuons", correctMCMuon, {"TLVectors","Muon_charge"});
 
-  //Create an output file for corrected values and a clone of the original tree
-  TFile *fout = new TFile("ObjectInfoNtuple_mucor.root","recreate");
-  TTree *t2 = t1->CloneTree(0);
+  // If you run data, apply the muon momentum correction "correctDataMuon" function (only for Data)
+  auto df_cor = df_tlv.Define("CorrectedMuons", correctDataMuon, {"TLVectors","Muon_charge"});
 
-  //for-loop of the event
-  for (Int_t k=0; k<nentries; ++k){
-    t1->GetEntry(k);
+  // Compute invariant mass of the corrected dimuon system
+  auto df_mass_cor = df_cor.Define("Dimuon_mass_cor", correctedInvariantMass, {"CorrectedMuons"});
 
-    //Run the correction if the event contains muons
-    if (numbermuon > 0){
-      TLorentzVector mu; //TLorentzVector of the reconstructed muon
+  // Check columns
+  auto colNames = df_mass_cor.GetColumnNames();
+  for (auto &&colName : colNames) std::cout << colName << std::endl;
 
-      //Set TLorentzVector of muon object
-      mu.SetPtEtaPhiM(muon_pt->at(0), muon_eta->at(0), muon_phi->at(0), muon_m);
+  // Save the new dataframe to an output-file
+  // Does not include TLVectors or corrected TLVectors
+  std::cout << "Saving dataframe" << std::endl;
+  df_mass_cor.Snapshot("Events", "Run2012BC_DoubleMuParked_Muons_RochCor.root", {"Dimuon_mass", "Dimuon_mass_cor", "nMuon", "Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge"});
 
-      float qter = 1.0; // added it by Higgs group’s request to propagate the uncertainty
-
-      //If you run MC, apply the muon momentum correction, “momcor_mc( )” function (only for MC)
-      //ntrk (number of track layer) is one of input and it can slightly improved the extra smearing
-      rmcor->momcor_mc(mu, muon_ch->at(0), 0, qter); //ntrk is the third parameter
-
-      //If you run data, apply the muon momentum correction, "momcor_data()" function (only for Data)
-      // No run dependence for 2012 data, so default of “runopt=0”
-      rmcor->momcor_data(mu, muon_ch->at(0), 0, qter); //runopt is the third parameter
-
-      //Save the corrected values
-      muon_px->at(0) = mu.Px();
-      muon_py->at(0) = mu.Py();
-      muon_pz->at(0) = mu.Pz();
-      muon_e->at(0) = mu.E();
-
-    }
-
-    //Fill the corrected values to the new tree
-    t2->Fill();
-
-  }
-
-  //Save the new tree
-  t2->Write();
 }
