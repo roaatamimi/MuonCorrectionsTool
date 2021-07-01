@@ -73,6 +73,7 @@ void Analysis::main()
       muon_py->at(0) = mu.Py();
       muon_pz->at(0) = mu.Pz();
       muon_e->at(0) = mu.E();
+      muon_pt->at(0) = mu.Pt();
 
     }
 
@@ -83,4 +84,8 @@ void Analysis::main()
 
   //Save the new tree
   t2->Write();
+
+  //Make some plots
+  //t1->Draw("muon_pt");
+  t2->Draw("muon_pt");
 }
