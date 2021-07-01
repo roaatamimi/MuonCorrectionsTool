@@ -16,9 +16,9 @@ root
 
 2. Compile `muresolution.cc`, `rochcor2012wasym.cc` and `Analysis.C`
 ```
-.L muresolution.cc++
-.L rochcor2012wasym.cc++
-.L Analysis.C+
+.L RochesterCorrections/muresolution.cc++
+.L RochesterCorrections/rochcor2012wasym.cc++
+.L RochesterCorrections/Test/Analysis.C+
 ```
 
 3. Run the main function
@@ -28,6 +28,6 @@ pf.main()
 ```
 4. Compile `Plot.C` and run the main function
 ```
-.L Plot.C+
+.L RochesterCorrections/Test/Plot.C+
 main()
 ```
