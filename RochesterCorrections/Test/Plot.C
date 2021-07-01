@@ -15,7 +15,7 @@ using namespace RooFit;
 double* doFit(string condition, double* init_conditions, string invariantMass)
 {
   // Read data to a TTree
-  TFile *file0 = TFile::Open("Run2012BC_DoubleMuParked_Muons_RochCor.root");
+  TFile *file0 = TFile::Open("./RochesterCorrections/Test/Run2012BC_DoubleMuParked_Muons_RochCor.root");
   TTree *DataTree = (TTree*)file0->Get(("Events"));
 
   // Create canvas for plot
@@ -146,5 +146,5 @@ int main()
   yield_ALL_cor->Draw("SAME PLC");
 
   // Save plot
-  c1->SaveAs("dimuon_mass_eta.pdf");
+  c1->SaveAs("./RochesterCorrections/Test/dimuon_mass_eta.pdf");
 }
