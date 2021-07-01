@@ -2,19 +2,19 @@
 
 ## Description
 
-This page contains instructions for using the [Rochester corrections](https://twiki.cern.ch/twiki/bin/viewauth/CMS/RochcorMuon) for muon momentum scale and resolution. These instructions are for the Run1 corrections and a [2012 dataset](http://opendata.cern.ch/record/12341) is used as an example.
+This page contains instructions for using the Rochester corrections for muon momentum scale and resolution. The corrections are used to compensate for the misalignments in data and Monte Carlo that the CMS reconstruction software does not fully correct. The misalignments for data and MC are different and corrections have been extracted for both.
 
-`RochesterCorrections` contains the official code for the corrections. `Analysis.C` reads the data, applies the corrections and produces an output-file with the corrected data. `Plot.C` creates the plot below that shows that the corrections have been applied correctly.
+These instructions are for the Run1 corrections and a [2012 dataset](http://opendata.cern.ch/record/12341) is used as an example. `RochesterCorrections` contains the official code for the corrections. `Test` contains `Analysis.C` which reads the dataset, applies the corrections to a muon pair, computes invariant mass and produces an output-file with the corrected data. `Plot.C` creates the plot below which shows that the corrections have been applied correctly. `Plot.C` is based on [this](https://cms-opendata-workshop.github.io/workshop-lesson-tagandprobe/index.html) Tag and Probe Method tutorial.
 
 **ADD PLOT**
 
 ## Usage instructions
 1. Open ROOT in terminal
 ```
-root -l
+root
 ```
 
-2. Compile *muresolution.cc*, *rochcor2012wasym.cc* and *Analysis.C*
+2. Compile `muresolution.cc`, `rochcor2012wasym.cc` and `Analysis.C`
 ```
 .L muresolution.cc++
 .L rochcor2012wasym.cc++
@@ -25,4 +25,9 @@ root -l
 ```
 Analysis pf
 pf.main()
+```
+4. Compile `Plot.C` and run the main function
+```
+.L Plot.C+
+main()
 ```
