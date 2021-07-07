@@ -4,6 +4,7 @@
 #include "Math/Vector4D.h"
 
 using namespace ROOT::VecOps;
+using ROOT::RDF::RNode;
 
 // Compute the invariant mass of two muon four-vectors
 float computeInvariantMass(RVec<float>& pt, RVec<float>& eta, RVec<float>& phi, RVec<float>& mass) {
@@ -42,8 +43,8 @@ RVec<TLorentzVector> correctDataMuon(RVec<TLorentzVector> muons, RVec<int>& char
   float runopt = 0; //No run dependence for 2012 data, so default of “runopt=0”
   float qter = 1.0; // added it by Higgs group’s request to propagate the uncertainty
 
-  rmcor.momcor_mc(muons[0], charge[0], runopt, qter);
-  rmcor.momcor_mc(muons[1], charge[1], runopt, qter);
+  rmcor.momcor_data(muons[0], charge[0], runopt, qter);
+  rmcor.momcor_data(muons[1], charge[1], runopt, qter);
   RVec<TLorentzVector> vectors {muons[0], muons[1]};
 
   return vectors;
@@ -76,12 +77,10 @@ RVec<float> correctedMass(RVec<TLorentzVector> muons){
   return values;
 }
 
-
-void Analysis::main()
-{
+// Apply the corrections to dataset
+int applyCorrections(string filename, string pathToFile, bool isData) {
   // Create dataframe from NanoAOD files
-  ROOT::RDataFrame df("Events", "root://eospublic.cern.ch//eos/opendata/cms/derived-data/AOD2NanoAODOutreachTool/Run2012BC_DoubleMuParked_Muons.root");
-  //ROOT::RDataFrame df("Events", "Run2012BC_DoubleMuParked_Muons.root"); // use when saved locally
+  ROOT::RDataFrame df("Events", pathToFile);
 
   // Select events with exactly two muons
   auto df_2mu = df.Filter("nMuon == 2", "Events with exactly two muons");
@@ -108,16 +107,16 @@ void Analysis::main()
   auto df_tlv = df_eta_neg.Define("TLVectors", createVector, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass"});
 
   // Run the correctios and add corrected muons as a new column
-  // CHOOSE THE CORRECT FUNCTION FOR DATA OR MC AND COMMENT THE OTHER
+  auto df_cor = std::make_unique<RNode>(df_tlv);
 
-  // If you run MC, apply the muon momentum correction "correctMCMuon" function (only for MC)
-  auto df_cor = df_tlv.Define("CorrectedMuons", correctMCMuon, {"TLVectors","Muon_charge"});
-
-  // If you run data, apply the muon momentum correction "correctDataMuon" function (only for Data)
-  auto df_cor = df_tlv.Define("CorrectedMuons", correctDataMuon, {"TLVectors","Muon_charge"});
+  if(isData){
+    df_cor = std::make_unique<RNode>(df_cor->Define("CorrectedMuons", correctDataMuon, {"TLVectors","Muon_charge"}));
+  } else {
+    df_cor = std::make_unique<RNode>(df_cor->Define("CorrectedMuons", correctMCMuon, {"TLVectors","Muon_charge"}));
+  }
 
   // Add columns for corrected values
-  auto df_cor_pt = df_cor.Define("Muon_pt_cor", correctedPt, {"CorrectedMuons"});
+  auto df_cor_pt = df_cor->Define("Muon_pt_cor", correctedPt, {"CorrectedMuons"});
   auto df_cor_eta = df_cor_pt.Define("Muon_eta_cor", correctedEta, {"CorrectedMuons"});
   auto df_cor_phi = df_cor_eta.Define("Muon_phi_cor", correctedPhi, {"CorrectedMuons"});
   auto df_cor_mass = df_cor_phi.Define("Muon_mass_cor", correctedMass, {"CorrectedMuons"});
@@ -131,6 +130,19 @@ void Analysis::main()
 
   // Save the new dataframe to a root-file
   std::cout << "Saving dataframe" << std::endl;
-  df_mass_cor.Snapshot("Events", "Run2012BC_DoubleMuParked_Muons_RochCor.root", {"Dimuon_mass", "Dimuon_mass_cor", "nMuon", "Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "Muon_eta_pos", "Muon_eta_neg", "Muon_pt_cor", "Muon_eta_cor", "Muon_phi_cor", "Muon_mass_cor"});
+  df_mass_cor.Snapshot("Events", ("./RochesterCorrections/Test/" + filename + "_Cor.root").c_str(), {"Dimuon_mass", "Dimuon_mass_cor", "nMuon", "Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "Muon_eta_pos", "Muon_eta_neg", "Muon_pt_cor", "Muon_eta_cor", "Muon_phi_cor", "Muon_mass_cor"});
 
+  return 0;
+}
+
+
+void Analysis::main()
+{
+  // Data
+  applyCorrections("Run2012BC_DoubleMuParked_Muons", "root://eospublic.cern.ch//eos/opendata/cms/derived-data/AOD2NanoAODOutreachTool/Run2012BC_DoubleMuParked_Muons.root", true);
+  // applyCorrections("Run2012BC_DoubleMuParked_Muons", "./RochesterCorrections/Test/Run2012BC_DoubleMuParked_Muons.root", true); // use when saved locally
+
+  // MC
+  applyCorrections("ZZTo2e2mu", "root://eospublic.cern.ch//eos/opendata/cms/upload/stefan/HiggsToFourLeptonsNanoAODOutreachAnalysis/ZZTo2e2mu.root", false);
+  applyCorrections("ZZTo4mu", "root://eospublic.cern.ch//eos/opendata/cms/upload/stefan/HiggsToFourLeptonsNanoAODOutreachAnalysis/ZZTo4mu.root", false);
 }
