@@ -6,6 +6,8 @@ This repository contains code and instructions for using the Rochester correctio
 
 These instructions are for the Run1 corrections and a [2012 dataset](http://opendata.cern.ch/record/12341) is used as an example. `RochesterCorrections` contains the official code for the corrections from the Muon POG. `Test` contains `Analysis.C` which reads the dataset, applies the corrections to a muon pair, computes invariant mass and produces an output-file with the corrected data. `Plot.C` creates the plot below which shows that the corrections have been applied correctly. `Plot.C` is based on [this](https://cms-opendata-workshop.github.io/workshop-lesson-tagandprobe/index.html) Tag and Probe Method tutorial.
 
+![plot](./RochesterCorrections/Test/dimuon_mass_eta_all.png)
+
 ## Usage instructions
 1. Open ROOT in terminal
 ```
