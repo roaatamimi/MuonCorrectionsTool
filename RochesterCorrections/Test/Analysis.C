@@ -56,7 +56,7 @@ int applyCorrections(string filename, string pathToFile, bool isData) {
   TBranch *bMuon_eta_pos = DataTree->Branch("Muon_eta_pos", &Muon_eta_pos, "Muon_eta_pos[nMuon]/F");
   TBranch *bMuon_eta_neg = DataTree->Branch("Muon_eta_neg", &Muon_eta_neg, "Muon_eta_neg[nMuon]/F");
 
-  rochcor2012 rmcor;// *rmcor = new rochcor2012(); // make the pointer of rochcor class
+  rochcor2012 rmcor; // make the pointer of rochcor class
 
   //Create an output file for corrected values and a clone of the original tree
   TFile *f2 = new TFile(("./RochesterCorrections/Test/" + filename + "_Cor.root").c_str(),"recreate");
@@ -66,6 +66,8 @@ int applyCorrections(string filename, string pathToFile, bool isData) {
   float ntrk = 0; //ntrk (number of track layer) is one of input and it can slightly improved the extra smearing
   float runopt = 0; //No run dependence for 2012 data, so default of “runopt=0”
   float qter = 1.0; // added by Higgs group’s request to propagate the uncertainty
+
+  std::cout << "Looping over events" << std::endl;
 
   // Loop over events
   Int_t nEntries = (Int_t)DataTree->GetEntries();
@@ -126,6 +128,8 @@ int applyCorrections(string filename, string pathToFile, bool isData) {
     DataTreeCor->Fill();
   }
 
+  std::cout << "Writing tree to ouput file" << std::endl;
+
   //Save the new tree
   DataTreeCor->Write();
 
@@ -137,7 +141,7 @@ int applyCorrections(string filename, string pathToFile, bool isData) {
 void Analysis::main()
 {
   // Data
-  applyCorrections("Run2012BC_DoubleMuParked_Muons", "root://eospublic.cern.ch//eos/opendata/cms/derived-data/AOD2NanoAODOutreachTool/Run2012BC_DoubleMuParked_Muons.root", true);
+  // applyCorrections("Run2012BC_DoubleMuParked_Muons", "root://eospublic.cern.ch//eos/opendata/cms/derived-data/AOD2NanoAODOutreachTool/Run2012BC_DoubleMuParked_Muons.root", true);
 
   // MC
   applyCorrections("ZZTo2e2mu", "root://eospublic.cern.ch//eos/opendata/cms/upload/stefan/HiggsToFourLeptonsNanoAODOutreachAnalysis/ZZTo2e2mu.root", false);
