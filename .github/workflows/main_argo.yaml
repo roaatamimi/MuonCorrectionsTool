@@ -27,6 +27,8 @@ jobs:
         argo version
     - name: Submit the argo test workflow
       run: |
+        pwd
+        ls -l
         argo submit -n argo  --wait RochesterCorrections/workflows/argo-workflow.yaml
         argo get -n argo @latest
     - name: Check the output
