@@ -22,7 +22,7 @@ spec:
         git clone git://github.com/cms-opendata-analyses/AOD2NanoAODOutreachTool  AOD2NanoAOD
         cd AOD2NanoAOD
         scram b -j8
-        nevents=10000
+        nevents=100
         eventline=$(grep maxEvents configs/data_cfg.py)
         sed -i "s/$eventline/process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32($nevents) )/g" configs/data_cfg.py
         cmsRun configs/data_cfg.py
