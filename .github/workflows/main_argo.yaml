@@ -16,7 +16,7 @@ jobs:
     - name: Set up persistent volume and storage pod
       run: |
         kubectl apply -f RochesterCorrections/workflows/volumes.yaml  
-        kubectl cp -n argo RochesterCorrections/ task-pv-pod:/mnt/data/
+        kubectl -n argo exec task-pv-pod -- ls  /
 
     - name: Set up argo
       run: |
