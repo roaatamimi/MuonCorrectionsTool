@@ -15,8 +15,8 @@ jobs:
         n=0; until ((n >= 60)); do kubectl -n default get serviceaccount default -o name && break; n=$((n + 1)); sleep 1; done; ((n < 60))
     - name: Set up persistent volume and storage pod
       run: |
-        kubectl apply -f RochesterCorrections/workflows/volumes.yaml  
-        kubectl cp -n argo RochesterCorrections/ task-pv-pod:/mnt/data
+        kubectl apply -f RochesterCorrections/workflows/volumes.yaml 
+        kubectl get pods
     - name: Set up argo
       run: |
         kubectl create ns argo
