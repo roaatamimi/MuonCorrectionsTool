@@ -1,4 +1,4 @@
-name: Test workflow on minikube + argo 
+name: Test  workflow on minikube + argo 
 on:
   pull_request:
     branches:
