@@ -17,6 +17,8 @@ jobs:
       run: |
         kubectl apply -f RochesterCorrections/workflows/volumes.yaml  
         kubectl get pods 
+        kubectl get pv,pvc
+        kubectl describe pvc task-pvc-claim
         sleep 10
         kubectl cp -n argo RochesterCorrections/ task-pv-pod:/mnt/data
     - name: Set up argo
