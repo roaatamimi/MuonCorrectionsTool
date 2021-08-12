@@ -12,21 +12,20 @@ spec:
   templates:
   - name: nanoaod-argo
     script:
-      image: cmsopendata/cmssw_5_3_32 
+      image: rootproject/root:6.22.08-ubuntu20.04
       command: [sh]
       source: |
-        source /opt/cms/entrypoint.sh
-        sudo chown $USER /mnt/vol
-        mkdir workspace
-        cd workspace
-        git clone git://github.com/cms-opendata-analyses/AOD2NanoAODOutreachTool  AOD2NanoAOD
-        cd AOD2NanoAOD
-        scram b -j8
-        nevents=100
-        eventline=$(grep maxEvents configs/data_cfg.py)
-        sed -i "s/$eventline/process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32($nevents) )/g" configs/data_cfg.py
-        cmsRun configs/data_cfg.py
-        cp output.root /mnt/vol/
+        cd /mnt/vol
+        root -b -l <<EOF
+        .L RochesterCorrections/muresolution.cc++
+        .L RochesterCorrections/rochcor2012wasym.cc++
+        .L RochesterCorrections/Test/Analysis.C+
+        Analysis pf
+        pf.main()
+        .L RochesterCorrections/Test/Plot.C+
+        main()
+        .q
+        EOF
         echo  ls -l /mnt/vol
         ls -l /mnt/vol
       volumeMounts:
