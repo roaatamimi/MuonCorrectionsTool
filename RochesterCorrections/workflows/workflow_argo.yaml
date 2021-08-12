@@ -27,7 +27,7 @@ spec:
         .q
         EOF
         echo  ls -l /mnt/vol
-        ls -l /mnt/vol
+        ls -l  /mnt/vol
       volumeMounts:
       - name: workdir
         mountPath: /mnt/vol
