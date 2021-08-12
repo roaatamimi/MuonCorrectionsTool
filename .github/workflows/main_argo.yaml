@@ -38,7 +38,7 @@ jobs:
         argo logs -n argo @latest
         mkdir outputs
         echo Copy file with kubectl cp task-pv-pod:/mnt/data/ outputs/ :
-        kubectl cp /mnt/data/RochesterCorrections outputs/
+        kubectl cp task-pv-pod:/mnt/data/*.pdf outputs/
         echo ls -l :
         ls -l
     - name: Upload the ouput as a github artifact
