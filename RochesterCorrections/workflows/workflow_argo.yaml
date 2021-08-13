@@ -16,6 +16,7 @@ spec:
       command: [sh]
       source: |
         cd /mnt/vol
+        ls -l
         root -b -l <<EOF
         .L RochesterCorrections/muresolution.cc++
         .L RochesterCorrections/rochcor2012wasym.cc++
