@@ -17,16 +17,11 @@ spec:
       source: |
         cd /mnt/vol
         ls  -l
-        root -b -l <<EOF
-        .L RochesterCorrections/muresolution.cc++
-        .L RochesterCorrections/rochcor2012wasym.cc++
-        .L RochesterCorrections/Test/Analysis.C+
-        Analysis pf
-        pf.main()
-        .L RochesterCorrections/Test/Plot.C+
-        main()
-        .q
-        EOF
+       root -l -b <<EOF
+       .pwd
+       .pwd
+       .q
+        > EOF
         echo  ls -l /mnt/vol
         ls -l  /mnt/vol
       volumeMounts:
