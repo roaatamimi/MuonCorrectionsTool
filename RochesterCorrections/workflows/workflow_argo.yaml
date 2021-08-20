@@ -17,11 +17,11 @@ spec:
       source: |
         cd /mnt/vol
         ls  -l
-       root -l -b <<EOF
-       .pwd
-       .pwd
-       .q
-        > EOF
+        root -l -b <<EOF
+        .pwd
+        .pwd
+        .q
+         > EOF
         echo  ls -l /mnt/vol
         ls -l  /mnt/vol
       volumeMounts:
